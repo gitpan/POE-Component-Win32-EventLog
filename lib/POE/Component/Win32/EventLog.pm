@@ -16,7 +16,7 @@ use Win32::EventLog;
 use Carp qw(carp croak);
 use vars qw($VERSION);
 
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 our %functions = ( qw(backup Backup read Read getoldest GetOldest getnumber GetNumber clear Clear report Report) );
 
@@ -41,8 +41,9 @@ sub spawn {
 
   $self->{session_id} = POE::Session->create(
 	  object_states => [
-	  	$self => { map { ( $_ => 'cmd_handler' ) } keys %functions },
-	  	$self => [ qw(_start child_closed child_error child_stderr child_stdout shutdown) ],
+	  	$self => { 'shutdown' => '_shutdown',
+			   map { ( $_ => 'cmd_handler' ) } keys %functions },
+	  	$self => [ qw(_start child_closed child_error child_stderr child_stdout) ],
 	  ],
 	  ( ( defined ( $options ) and ref ( $options ) eq 'HASH' ) ? ( options => $options ) : () ),
   )->ID();
@@ -179,6 +180,10 @@ sub child_stdout {
 }
 
 sub shutdown {
+  $_[0]->yield( 'shutdown' => @_[1..$#_] );
+}
+
+sub _shutdown {
   my ($kernel,$self) = @_[KERNEL,OBJECT];
 
   if ( $self->{alias} ) {
@@ -386,6 +391,10 @@ This method provides an alternative object based means of calling events to the 
 First argument is the event to call, following arguments are sent as arguments to the resultant
 call.
 
+=item shutdown
+
+Terminates the component instance.
+
 =back
 
 =head1 INPUT
@@ -420,6 +429,10 @@ Returns the indicated eventlog record from the eventlog.
 =item report
 
 Generates an EventLog entry. You must specify a hashref representing the record to be added, using 'args'.
+
+=item shutdown
+
+Terminates the component instance.
 
 =back
 
