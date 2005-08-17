@@ -1,12 +1,13 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         POE-Component-Win32-EventLog
-version:      0.81
+version:      1.00
 version_from: lib/POE/Component/Win32/EventLog.pm
 installdirs:  site
 requires:
     Carp:                          0
     POE:                           0.31
+    Win32:                         0
     Win32::EventLog:               0
 
 distribution_type: module

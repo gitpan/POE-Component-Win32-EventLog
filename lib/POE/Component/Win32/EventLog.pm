@@ -7,13 +7,16 @@ package POE::Component::Win32::EventLog;
 # distribution for details.
 #
 
+use strict;
+use warnings;
+
 use POE 0.31 qw(Wheel::Run Filter::Line Filter::Reference);
 use Win32;
 use Win32::EventLog;
 use Carp qw(carp croak);
 use vars qw($VERSION);
 
-$VERSION = '0.81';
+$VERSION = '1.00';
 
 our %functions = ( qw(backup Backup read Read getoldest GetOldest getnumber GetNumber clear Clear report Report) );
 
@@ -74,7 +77,7 @@ sub _start {
 
   $self->{wheel} = POE::Wheel::Run->new(
 	Program     => \&subprocess,
-	ProgramArgs => [ $self->{source}, $self->{system} ],
+	ProgramArgs => [ $self->{source}, $self->{system}, $self->{dontresolveuser} ],
 	CloseOnCall => 0,
     	ErrorEvent  => 'child_error',             # Event to emit on errors.
     	CloseEvent  => 'child_closed',     # Child closed all output.
@@ -192,7 +195,7 @@ sub shutdown {
 
 sub subprocess {
   binmode(STDIN); binmode(STDOUT); 
-  my ($source,$system) = splice @_, 0, 2;
+  my ($source,$system,$dontresolveuser) = splice @_, 0, 3;
   my $raw;
   my $size = 4096;
   my $filter = POE::Filter::Reference->new();
@@ -230,6 +233,9 @@ sub subprocess {
 		my $hashref = {};
 		if ( my $result = $handle->$func( @{ $req->{args} }, $hashref ) ) {
 			$req->{result} = $hashref;
+			unless ( $dontresolveuser ) {
+			  $req->{result}->{User} = lookupaccountsid( $req->{result}->{User} );
+			}
 		} else {
 		   $req->{error} = &error_codes;
 		}
@@ -253,6 +259,19 @@ sub subprocess {
 sub error_codes {
   my $error = Win32::GetLastError();
   return [ $error, Win32::FormatMessage($error) ];
+}
+
+sub lookupaccountsid {
+  my ($sid) = shift || return '';
+
+  unless ($sid) {
+	return $sid;
+  } 
+  my ($account,$domain,$sidtype);
+  eval {
+    Win32::LookupAccountSID("",$sid,$account,$domain,$sidtype);
+  };
+  return "$domain\\$account";
 }
 
 1;
@@ -343,6 +362,8 @@ Takes a number of arguments, all of which are optional.
   'alias', the kernel alias to bless the component with;
   'debug', set this to 1 to see component debug information; 
   'options', a hashref of POE::Session options that are passed to the component's session creator.
+  'dontresolveuser', set to 1 to stop the component automagically resolving the User field from a SID 
+  	to a 'proper' username. 
 
 =head1 METHODS
 
@@ -412,7 +433,7 @@ For each requested operation an event handler is required. ARG0 of this event ha
 
 For most cases this will be just a true value. For 'getnumber' and 'getoldest' it will be an integer.
 For 'read', it will be a hashref representing the eventlog record ( see L<Win32::EventLog|Win32::EventLog> for
-details.
+details ( the component automagically resolves the User field from a SID to a 'proper' username ).
 
 =item error
 
