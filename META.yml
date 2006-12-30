@@ -1,16 +1,15 @@
-author: 'Chris Williams <chris@bingosnet.co.uk>'
+author: Chris Williams <chris@bingosnet.co.uk>
 distribution_type: module
 generated_by: Module::Install version 0.64
 license: perl
-module_name: POE::Component::Win32::EventLog
 name: POE-Component-Win32-EventLog
-no_index:
-  directory:
+no_index: 
+  directory: 
     - inc
     - t
-requires:
+requires: 
   Carp: 0
-  POE: 0.31
+  POE: 0.38
   Win32: 0
   Win32::EventLog: 0
-version: 1.07
+version: 1.08
