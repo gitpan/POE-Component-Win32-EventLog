@@ -13,6 +13,7 @@ meta-spec:
 name: POE-Component-Win32-EventLog
 no_index:
   directory:
+    - mylib
     - inc
     - t
 requires:
@@ -20,4 +21,4 @@ requires:
   POE: 0.38
   Win32: 0
   Win32::EventLog: 0
-version: 1.14
+version: 1.16
