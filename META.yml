@@ -20,4 +20,4 @@ requires:
   POE: 0.38
   Win32: 0
   Win32::EventLog: 0
-version: 1.12
+version: 1.14
